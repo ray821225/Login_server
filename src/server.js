@@ -3,6 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const qrRoutes = require('./routes/qrRoutes');
 
 dotenv.config();
 
@@ -21,6 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // 路由
 app.use('/api/auth', authRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/qr', qrRoutes);
 
 // 健康檢查
 app.get('/api/health', (req, res) => {

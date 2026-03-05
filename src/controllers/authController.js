@@ -96,12 +96,13 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 更新最後登入時間
-    user.lastLogin = Date.now();
-    await user.save();
-
     // 生成 token
     const token = generateToken(user._id);
+
+    // 更新最後登入時間和 activeToken（踢出其他裝置）
+    user.lastLogin = Date.now();
+    user.activeToken = token;
+    await user.save();
 
     res.json({
       success: true,

@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
+  },
+  activeToken: {
+    type: String,
+    select: false
   }
 });
 
