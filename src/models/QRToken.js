@@ -12,6 +12,15 @@ const qrTokenSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  status: {
+    type: String,
+    enum: ["pending", "used"],
+    default: "pending",
+  },
+  usedBy: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -36,7 +45,21 @@ qrTokenSchema.statics.verifyToken = async function (token) {
     await qrToken.deleteOne();
     return false;
   }
+  if (qrToken.status === "used") return false;
   return true;
+};
+
+// 標記 Token 為已使用
+qrTokenSchema.statics.markUsed = async function (token, username) {
+  await this.updateOne({ token }, { status: "used", usedBy: username });
+};
+
+// 查詢 Token 狀態
+qrTokenSchema.statics.getStatus = async function (token) {
+  const qrToken = await this.findOne({ token });
+  if (!qrToken) return { exists: false };
+  if (new Date() > qrToken.expiresAt) return { exists: false };
+  return { exists: true, status: qrToken.status, usedBy: qrToken.usedBy };
 };
 
 module.exports = mongoose.model("QRToken", qrTokenSchema);

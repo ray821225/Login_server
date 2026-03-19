@@ -27,8 +27,12 @@ exports.clock = async (req, res) => {
       }
     }
 
+    const clockUser = await User.findById(userId);
+
     const today = getTodayStr();
     let attendance = await Attendance.findOne({ user: userId, date: today });
+
+    const username = clockUser?.username || "員工";
 
     if (!attendance) {
       // 上班打卡
@@ -39,6 +43,10 @@ exports.clock = async (req, res) => {
         clockInMethod: method,
         status: "clocked_in",
       });
+
+      if (method === "qrcode" && qrToken) {
+        await QRToken.markUsed(qrToken, username);
+      }
 
       return res.status(201).json({
         success: true,
@@ -59,6 +67,10 @@ exports.clock = async (req, res) => {
     attendance.clockOutMethod = method;
     attendance.status = "completed";
     await attendance.save();
+
+    if (method === "qrcode" && qrToken) {
+      await QRToken.markUsed(qrToken, username);
+    }
 
     return res.json({
       success: true,
@@ -118,6 +130,10 @@ exports.clockByCredentials = async (req, res) => {
         status: "clocked_in",
       });
 
+      if (qrToken && method === "qrcode") {
+        await QRToken.markUsed(qrToken, user.username);
+      }
+
       return res.status(201).json({
         success: true,
         message: `${user.username} 上班打卡成功`,
@@ -136,6 +152,10 @@ exports.clockByCredentials = async (req, res) => {
     attendance.clockOutMethod = method;
     attendance.status = "completed";
     await attendance.save();
+
+    if (qrToken && method === "qrcode") {
+      await QRToken.markUsed(qrToken, user.username);
+    }
 
     return res.json({
       success: true,

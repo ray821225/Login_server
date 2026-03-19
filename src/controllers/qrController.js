@@ -40,3 +40,17 @@ exports.verify = async (req, res) => {
     });
   }
 };
+
+// GET /api/qr/status/:token
+exports.getStatus = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const result = await QRToken.getStatus(token);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    res.status(500).json({
+      message: "查詢失敗",
+      error: error.message,
+    });
+  }
+};
