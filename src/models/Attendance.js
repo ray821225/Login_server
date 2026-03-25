@@ -19,17 +19,7 @@ const attendanceSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    clockInMethod: {
-      type: String,
-      enum: ["qrcode", "manual"],
-      default: null,
-    },
-    clockOutMethod: {
-      type: String,
-      enum: ["qrcode", "manual"],
-      default: null,
-    },
-    status: {
+status: {
       type: String,
       enum: ["clocked_in", "completed"],
       default: "clocked_in",

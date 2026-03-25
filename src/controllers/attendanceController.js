@@ -28,19 +28,15 @@ exports.clock = async (req, res) => {
     }
 
     const clockUser = await User.findById(userId);
-
+    const username = clockUser?.username || "員工";
     const today = getTodayStr();
     let attendance = await Attendance.findOne({ user: userId, date: today });
 
-    const username = clockUser?.username || "員工";
-
     if (!attendance) {
-      // 上班打卡
       attendance = await Attendance.create({
         user: userId,
         date: today,
         clockIn: new Date(),
-        clockInMethod: method,
         status: "clocked_in",
       });
 
@@ -62,9 +58,7 @@ exports.clock = async (req, res) => {
       });
     }
 
-    // 下班打卡
     attendance.clockOut = new Date();
-    attendance.clockOutMethod = method;
     attendance.status = "completed";
     await attendance.save();
 
@@ -109,13 +103,11 @@ exports.clockByCredentials = async (req, res) => {
       return res.status(401).json({ message: "電子郵件或密碼錯誤" });
     }
 
-    let method = "manual";
     if (qrToken) {
       const isValid = await QRToken.verifyToken(qrToken);
       if (!isValid) {
         return res.status(400).json({ message: "QR Code 已過期或無效" });
       }
-      method = "qrcode";
     }
 
     const today = getTodayStr();
@@ -126,11 +118,10 @@ exports.clockByCredentials = async (req, res) => {
         user: user._id,
         date: today,
         clockIn: new Date(),
-        clockInMethod: method,
         status: "clocked_in",
       });
 
-      if (qrToken && method === "qrcode") {
+      if (qrToken) {
         await QRToken.markUsed(qrToken, user.username);
       }
 
@@ -149,11 +140,10 @@ exports.clockByCredentials = async (req, res) => {
     }
 
     attendance.clockOut = new Date();
-    attendance.clockOutMethod = method;
     attendance.status = "completed";
     await attendance.save();
 
-    if (qrToken && method === "qrcode") {
+    if (qrToken) {
       await QRToken.markUsed(qrToken, user.username);
     }
 
