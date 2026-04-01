@@ -48,3 +48,10 @@ exports.protect = async (req, res, next) => {
     });
   }
 };
+
+exports.isAdmin = (req, res, next) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ message: "權限不足" });
+  }
+  next();
+};
