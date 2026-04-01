@@ -183,6 +183,52 @@ exports.getToday = async (req, res) => {
   }
 };
 
+// GET /api/attendance/admin/all?page=1&limit=20&yearMonth=YYYY-MM&username=keyword
+exports.getAllAttendance = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const { yearMonth, username } = req.query;
+
+    const filter = {};
+
+    if (yearMonth) {
+      filter.date = { $regex: `^${yearMonth}` };
+    }
+
+    if (username) {
+      const matchedUsers = await User.find(
+        { username: { $regex: username, $options: "i" } },
+        "_id",
+      );
+      filter.user = { $in: matchedUsers.map((u) => u._id) };
+    }
+
+    const [records, total] = await Promise.all([
+      Attendance.find(filter)
+        .populate("user", "username email")
+        .sort({ date: -1, clockIn: -1 })
+        .skip(skip)
+        .limit(limit),
+      Attendance.countDocuments(filter),
+    ]);
+
+    res.json({
+      success: true,
+      records,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "取得出勤記錄失敗", error: error.message });
+  }
+};
+
 // GET /api/attendance/history?page=1&limit=10
 exports.getHistory = async (req, res) => {
   try {
